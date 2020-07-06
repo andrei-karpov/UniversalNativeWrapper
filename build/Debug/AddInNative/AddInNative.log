@@ -1,9 +1,0 @@
-﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  stdafx.cpp
-cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  AddInNative.cpp
-cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  dllmain.cpp
-     Creating library E:\Downloads\Sborka-komponenty-VS2017\VNCOMP83\example\\bind\AddInNativeWin32.lib and object E:\Downloads\Sborka-komponenty-VS2017\VNCOMP83\example\\bind\AddInNativeWin32.exp
-AddInNativeWin32.exp : warning LNK4070: /OUT:AddInNative.dll directive in .EXP differs from output filename 'E:\Downloads\Sborka-komponenty-VS2017\VNCOMP83\example\\bind\AddInNativeWin32.dll'; ignoring directive
-  AddInNative.vcxproj -> E:\Downloads\Sborka-komponenty-VS2017\VNCOMP83\example\\bind\AddInNativeWin32.dll

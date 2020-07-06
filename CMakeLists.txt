@@ -88,12 +88,6 @@ set (EXECUTABLE_OUTPUT_PATH ${LIBRARY_OUTPUT_PATH})
 
 include_directories(BEFORE  . ${CMAKE_SOURCE_DIR}../include)
 
-add_subdirectory (NativeAPI)
-if (NOT APPLE)
-    add_subdirectory (AddInChrome)
-endif()
-
 if (WIN32)
-    add_subdirectory(AddInIE)
     add_subdirectory(COM)
 endif (WIN32)
