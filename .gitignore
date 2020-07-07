@@ -33,3 +33,4 @@ packages/
 bind/*
 build/*
 .DS_Store
+Addin_i.h
