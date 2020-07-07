@@ -32,3 +32,4 @@ _ReSharper*/
 packages/
 bind/*
 build/*
+.DS_Store
