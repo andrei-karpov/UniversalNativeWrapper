@@ -522,7 +522,7 @@ void CAddInCOM::ShowLogString(BSTR log_string, int MessageType)
         EXCEPINFO eiInfo;
         eiInfo.wCode = ADDIN_E_VERY_IMPORTANT;
         eiInfo.scode = S_OK;
-        eiInfo.bstrSource = L"NativeWrapper1C";
+        eiInfo.bstrSource = L"UniversalNativeWrapper";
         eiInfo.bstrDescription = (BSTR) log_string;
         m_iErrorLog->AddError(csNull.AllocSysString(), &eiInfo);
         ::SysFreeString(eiInfo.bstrSource);
