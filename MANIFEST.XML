@@ -1,4 +1,4 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <bundle xmlns="http://v8.1c.ru/8.2/addin/bundle">
-  <component os="Windows" path="UniversalNativeWrapper.dll" type="native" arch="i386"/>
+  <component os="Windows" path="UniversalNativeWrapper.dll" type="com" arch="i386"/>
 </bundle>
