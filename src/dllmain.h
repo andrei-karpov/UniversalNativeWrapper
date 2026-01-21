@@ -1,5 +1,7 @@
 // dllmain.h : Declaration of module class.
 
+#pragma once
+
 class CAddInModule : public CAtlDllModuleT< CAddInModule >
 {
 public :

@@ -10,15 +10,17 @@
 * @return the result of
 */
 bool ADDIN_API MyMemoryManager::AllocMemory(void** pMemory, unsigned long ulCountByte)
-//это просто замена ADDIN_IPI на __stdcall если определена константа _WINDOWS
+// Р’РђР–РќРћ: РїР°РјСЏС‚СЊ РґРѕР»Р¶РЅР° РѕСЃРІРѕР±РѕР¶РґР°С‚СЊСЃСЏ С‚РµРј Р¶Рµ РјРµРЅРµРґР¶РµСЂРѕРј.
 {
-	bool result = true;
+	if (!pMemory || ulCountByte == 0)
+		return false;
 
-	int* p = 0;
-	p = new int[ulCountByte];
-	*pMemory = p; //!!!!!!!!!!!!!!!!!!!ВОТ ПРАВИЛЬНОЕ единственно возможное присваивание!!!!!!!!!!!!!!!!
+	unsigned char* buffer = new unsigned char[ulCountByte];
+	if (!buffer)
+		return false;
 
-	return result;
+	*pMemory = buffer;
+	return true;
 }
 //----------------------------------------------------------------------------
 
@@ -30,6 +32,10 @@ bool ADDIN_API MyMemoryManager::AllocMemory(void** pMemory, unsigned long ulCoun
 */
 void ADDIN_API MyMemoryManager::FreeMemory(void** pMemory)
 {
+	if (!pMemory || !*pMemory)
+		return;
 
-	delete pMemory;
+	unsigned char* buffer = (unsigned char*)(*pMemory);
+	delete[] buffer;
+	*pMemory = 0;
 }

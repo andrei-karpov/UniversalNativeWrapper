@@ -1,6 +1,5 @@
 // AddIn.cpp : Implementation of DLL Exports.
 
-
 #include "stdafx.h"
 #include "resource.h"
 #include "AddIn_i.h"
@@ -18,7 +17,6 @@ STDAPI DllCanUnloadNow(void)
     return _AtlModule.DllCanUnloadNow();
 }
 
-
 // Returns a class factory to create an object of the requested type
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
@@ -29,11 +27,9 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
     return _AtlModule.DllGetClassObject(rclsid, riid, ppv);
 }
 
-
 // DllRegisterServer - Adds entries to the system registry
 STDAPI DllRegisterServer(void)
 {
-    // registers object, typelib and all interfaces in typelib
     HRESULT hr = _AtlModule.DllRegisterServer();
 #ifdef _MERGE_PROXYSTUB
     if (FAILED(hr))
@@ -42,7 +38,6 @@ STDAPI DllRegisterServer(void)
 #endif
     return hr;
 }
-
 
 // DllUnregisterServer - Removes entries from the system registry
 STDAPI DllUnregisterServer(void)
@@ -60,7 +55,7 @@ STDAPI DllUnregisterServer(void)
 }
 
 // DllInstall - Adds/Removes entries to the system registry per user
-//              per machine.    
+//              per machine.
 STDAPI DllInstall(BOOL bInstall, LPCWSTR pszCmdLine)
 {
     HRESULT hr = E_FAIL;
@@ -75,10 +70,10 @@ STDAPI DllInstall(BOOL bInstall, LPCWSTR pszCmdLine)
     }
 
     if (bInstall)
-    {    
+    {
         hr = DllRegisterServer();
         if (FAILED(hr))
-        {    
+        {
             DllUnregisterServer();
         }
     }
@@ -89,5 +84,10 @@ STDAPI DllInstall(BOOL bInstall, LPCWSTR pszCmdLine)
 
     return hr;
 }
-
-
+//---------------------------------------------------------------------------//
+#include "ComponentBase.h"
+AttachType GetAttachType()
+{
+    return eCanAttachAny;
+}
+//---------------------------------------------------------------------------//

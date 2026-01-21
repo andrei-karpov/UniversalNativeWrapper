@@ -1,93 +1,76 @@
-# Cmake script for project AddIn
-# autor: 1C
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.18...3.31 FATAL_ERROR)
 
-if (MSVC)
-    set(CMAKE_VS_PLATFORM_TOOLSET "v120_xp" GLOBAL)
-endif(MSVC)
-
-project (AddIn)
-#-----------------------------------------------------------------------------
-# Minimum compiler version check: Microsoft C/C++ >= 18.0 (aka VS 2013 aka VS 12.0)
-if (MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18.0)
-  message(FATAL_ERROR "Microsoft Visual Studio 2013 or later is required.")
-endif ()
-if (MSVC)
-    set(CMAKE_VS_PLATFORM_TOOLSET "v120_xp" CACHE "STRING" "Compilator toolset" FORCE)
-    foreach(flag
-        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-        if(${flag} MATCHES "/MD")
-            string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
-            set(${flag} ${${flag}} CACHE "STRING" "Compilation flags" FORCE)
-        endif()
-    endforeach()
-endif()
-OPTION(TARGET_PLATFORM_32 "Build target for i386" ON)
-MARK_AS_ADVANCED(TARGET_PLATFORM_32)
-#-----------------------------------------------------------------------------
-# Minimum compiler version check: GCC >= 4.8
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND
-    CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
-  message(FATAL_ERROR "GCC 4.8 or later is required.")
-endif ()
-
-message(STATUS "System: " ${CMAKE_SYSTEM_NAME} " " ${CMAKE_SYSTEM_VERSION})
-message(STATUS "Processor: " ${CMAKE_HOST_SYSTEM_PROCESSOR})
-
-if (NOT UNIX)
-    IF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-       SET(CMAKE_BUILD_TYPE Release CACHE "STRING" "Compilator type" FORCE)
-    ENDIF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)   
-endif(NOT UNIX)
-
-if (UNIX)
-    set(MySuffix1 "Lin")
-    if (APPLE)
-        set(MySuffix1 "Mac")
-    endif(APPLE)
-else(UNIX)
-    set(MySuffix1 "Win")
-endif(UNIX)
-
-set(BUILD_DIR "build")
-set(CMAKE_SKIP_RPATH ON CACHE "BOOL" "" FORCE)
-
-if (TARGET_PLATFORM_32)
-    set(MySuffix2 "32")
-    if (UNIX)
-        set (CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -m32" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} -m32" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} -m32" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_STATIC_LINKER_FLAGS  "${CMAKE_STATIC_LINKER_FLAGS} -m32" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -m32" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -m32" CACHE "STRING" "Linker flags" FORCE)
-    endif()
-    if (NOT UNIX)
-        #set(CMAKE_EXE_LINKER_FLAGS "/machine:x86")
-    endif()
-else()
-    set(MySuffix2 "64")
-    if (UNIX)
-        set (CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -m64" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} -m64" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} -m64" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_STATIC_LINKER_FLAGS  "${CMAKE_STATIC_LINKER_FLAGS} -m64" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -m64" CACHE "STRING" "Linker flags" FORCE)
-        set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -m64" CACHE "STRING" "Linker flags" FORCE)
-    endif()
-    if (NOT UNIX)
-        #set(CMAKE_EXE_LINKER_FLAGS "/machine:x64")
-    endif()
+if (NOT WIN32)
+    message(FATAL_ERROR "Поддерживается только Windows.")
 endif()
 
-set (LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
-set (EXECUTABLE_OUTPUT_PATH ${LIBRARY_OUTPUT_PATH})
+project(UniversalNativeWrapper LANGUAGES C CXX)
 
-include_directories(BEFORE  . ${CMAKE_SOURCE_DIR}../include)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-if (WIN32)
-    add_subdirectory(COM)
-endif (WIN32)
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+
+set(MIDL_OUTPUT
+    ${CMAKE_CURRENT_BINARY_DIR}/AddIn_i.h
+    ${CMAKE_CURRENT_BINARY_DIR}/AddIn_i.c
+    ${CMAKE_CURRENT_BINARY_DIR}/AddIn.tlb
+)
+
+set(TYPELIB_PATH "${CMAKE_CURRENT_BINARY_DIR}/AddIn.tlb")
+configure_file(${SRC_DIR}/AddIn.rc.in ${CMAKE_CURRENT_BINARY_DIR}/AddIn.rc @ONLY)
+
+add_custom_command(
+    OUTPUT ${MIDL_OUTPUT}
+    COMMAND midl /h ${CMAKE_CURRENT_BINARY_DIR}/AddIn_i.h
+        /iid ${CMAKE_CURRENT_BINARY_DIR}/AddIn_i.c
+        /tlb ${CMAKE_CURRENT_BINARY_DIR}/AddIn.tlb
+        ${SRC_DIR}/AddIn.idl
+    WORKING_DIRECTORY ${SRC_DIR}
+    MAIN_DEPENDENCY ${SRC_DIR}/AddIn.idl
+    BYPRODUCTS ${MIDL_OUTPUT}
+    VERBATIM
+)
+
+add_library(${PROJECT_NAME} SHARED
+    ${SRC_DIR}/AddInCOM.cpp
+    ${SRC_DIR}/AddInCOM.h
+    ${SRC_DIR}/AddIn.cpp
+    ${SRC_DIR}/dllmain.cpp
+    ${SRC_DIR}/dlldatax.c
+    ${SRC_DIR}/stdafx.cpp
+    ${SRC_DIR}/MyMemoryManager.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/AddIn.rc
+    ${SRC_DIR}/AddIn.rgs
+    ${SRC_DIR}/AddInCOM.rgs
+    ${SRC_DIR}/AddIn.def
+    ${MIDL_OUTPUT}
+)
+
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/AddIn.rc
+    PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/AddIn.tlb")
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    WIN32
+    UNICODE
+    _UNICODE
+    _USRDLL
+    _CRT_SECURE_NO_WARNINGS
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE rpcrt4 oleaut32)
+
+if (MSVC)
+    target_link_options(${PROJECT_NAME} PRIVATE "/DEF:${SRC_DIR}/AddIn.def")
+endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    PREFIX ""
+)

@@ -1,0 +1,22 @@
+HKCR
+{
+    NoRemove AppID
+    {
+        '%APPID%' = s 'UniversalNativeWrapper'
+        'UniversalNativeWrapper.DLL'
+        {
+            val AppID = s '%APPID%'
+        }
+    }
+}
+HKCR
+{
+    NoRemove AppID
+    {
+        '%APPID%' = s 'AddIn'
+        'AddIn.DLL'
+        {
+            val AppID = s '%APPID%'
+        }
+    }
+}

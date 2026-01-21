@@ -1,5 +1,6 @@
+#pragma once
 //---------------------------------------------------------------------------
-//это наш аналог менеджера памяти 1с предприятия
+// РњРµРЅРµРґР¶РµСЂ РїР°РјСЏС‚Рё РґР»СЏ РїРµСЂРµРґР°С‡Рё РІ native.
 #include "types.h"
 #include "IMemoryManager.h"
 
@@ -16,7 +17,7 @@ public:
 	* @param ulCountByte - memory size
 	* @return the result of
 	*/
-	bool ADDIN_API AllocMemory(void** pMemory, unsigned long ulCountByte); //это просто замена ADDIN_IPI на __stdcall если определена константа _WINDOWS
+	bool ADDIN_API AllocMemory(void** pMemory, unsigned long ulCountByte); //пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ ADDIN_IPI пїЅпїЅ __stdcall пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ _WINDOWS
 	/// Releases memory
 	/**
 	* @param pMemory - The double pointer to the memory block being released

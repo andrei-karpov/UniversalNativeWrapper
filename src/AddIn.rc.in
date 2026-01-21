@@ -1,0 +1,12 @@
+#include "resource.h"
+#include "AddIn_i.h"
+#include <winres.h>
+
+STRINGTABLE
+BEGIN
+    IDS_PROJNAME "UniversalNativeWrapper"
+END
+
+IDR_ADDIN REGISTRY "AddIn.rgs"
+IDR_ADDINCOM REGISTRY "AddInCOM.rgs"
+1 TYPELIB "@TYPELIB_PATH@"

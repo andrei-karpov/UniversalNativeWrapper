@@ -31,5 +31,11 @@ _ReSharper*/
 packages/
 bind/*
 build/*
+/temp/
 .DS_Store
 Addin_i.h
+BUILD-X64/*
+template/*
+example/*
+docs/*
+.cursorrules
