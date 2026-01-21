@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<drivers>
+	<component progid="AddIn.UniversalNativeWrapper" name="COM-обертка для 1С над Native"/>
+</drivers>
