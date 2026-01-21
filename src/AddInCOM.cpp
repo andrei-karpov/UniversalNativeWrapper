@@ -20,6 +20,123 @@ namespace
     const wchar_t* kMethodSetDriverNameRu = L"УстановитьДрайвер";
     const wchar_t* kErrorSource = L"UniversalNativeWrapper";
 
+    void WriteLogLine(const wchar_t* message);
+    void WriteLogFormat(const wchar_t* fmt, ...);
+
+    const wchar_t* VariantTypeToString(VARTYPE vt)
+    {
+        VARTYPE base = (vt & ~VT_BYREF);
+        switch (base)
+        {
+        case VT_EMPTY: return L"VT_EMPTY";
+        case VT_NULL: return L"VT_NULL";
+        case VT_I2: return L"VT_I2";
+        case VT_I4: return L"VT_I4";
+        case VT_R4: return L"VT_R4";
+        case VT_R8: return L"VT_R8";
+        case VT_CY: return L"VT_CY";
+        case VT_DATE: return L"VT_DATE";
+        case VT_BSTR: return L"VT_BSTR";
+        case VT_DISPATCH: return L"VT_DISPATCH";
+        case VT_ERROR: return L"VT_ERROR";
+        case VT_BOOL: return L"VT_BOOL";
+        case VT_VARIANT: return L"VT_VARIANT";
+        case VT_UNKNOWN: return L"VT_UNKNOWN";
+        case VT_DECIMAL: return L"VT_DECIMAL";
+        case VT_I1: return L"VT_I1";
+        case VT_UI1: return L"VT_UI1";
+        case VT_UI2: return L"VT_UI2";
+        case VT_UI4: return L"VT_UI4";
+        case VT_I8: return L"VT_I8";
+        case VT_UI8: return L"VT_UI8";
+        case VT_INT: return L"VT_INT";
+        case VT_UINT: return L"VT_UINT";
+        case VT_ARRAY: return L"VT_ARRAY";
+        default: return L"VT_UNKNOWN";
+        }
+    }
+
+#ifdef NONAMELESSUNION
+#define UNW_TV_STR_LEN(X) ((X)->u.str.strLen)
+#define UNW_TV_WSTR_LEN(X) ((X)->u.wstr.wstrLen)
+#else
+#define UNW_TV_STR_LEN(X) ((X)->strLen)
+#define UNW_TV_WSTR_LEN(X) ((X)->wstrLen)
+#endif
+
+    const wchar_t* TVariantTypeToString(TYPEVAR vt)
+    {
+        TYPEVAR base = vt & VTYPE_TYPEMASK;
+        switch (base)
+        {
+        case VTYPE_EMPTY: return L"VTYPE_EMPTY";
+        case VTYPE_NULL: return L"VTYPE_NULL";
+        case VTYPE_I2: return L"VTYPE_I2";
+        case VTYPE_I4: return L"VTYPE_I4";
+        case VTYPE_R4: return L"VTYPE_R4";
+        case VTYPE_R8: return L"VTYPE_R8";
+        case VTYPE_DATE: return L"VTYPE_DATE";
+        case VTYPE_PSTR: return L"VTYPE_PSTR";
+        case VTYPE_INTERFACE: return L"VTYPE_INTERFACE";
+        case VTYPE_ERROR: return L"VTYPE_ERROR";
+        case VTYPE_BOOL: return L"VTYPE_BOOL";
+        case VTYPE_VARIANT: return L"VTYPE_VARIANT";
+        case VTYPE_I1: return L"VTYPE_I1";
+        case VTYPE_UI1: return L"VTYPE_UI1";
+        case VTYPE_UI2: return L"VTYPE_UI2";
+        case VTYPE_UI4: return L"VTYPE_UI4";
+        case VTYPE_I8: return L"VTYPE_I8";
+        case VTYPE_UI8: return L"VTYPE_UI8";
+        case VTYPE_INT: return L"VTYPE_INT";
+        case VTYPE_UINT: return L"VTYPE_UINT";
+        case VTYPE_HRESULT: return L"VTYPE_HRESULT";
+        case VTYPE_PWSTR: return L"VTYPE_PWSTR";
+        case VTYPE_BLOB: return L"VTYPE_BLOB";
+        case VTYPE_CLSID: return L"VTYPE_CLSID";
+        default: return L"VTYPE_UNKNOWN";
+        }
+    }
+
+    void LogTVariantSummary(const tVariant& value, const wchar_t* prefix)
+    {
+        TYPEVAR vt = TV_VT(&value);
+        const wchar_t* name = TVariantTypeToString(vt);
+        const wchar_t* byRef = (vt & VTYPE_BYREF) ? L" byref" : L"";
+        WriteLogFormat(L"%s: vt=0x%04X (%s%s)", prefix, (unsigned)vt, name, byRef);
+
+        TYPEVAR base = vt & VTYPE_TYPEMASK;
+        switch (base)
+        {
+        case VTYPE_I4:
+            WriteLogFormat(L"%s: I4=%ld", prefix, (long)TV_I4(&value));
+            break;
+        case VTYPE_I2:
+            WriteLogFormat(L"%s: I2=%d", prefix, (int)TV_I2(&value));
+            break;
+        case VTYPE_I8:
+            WriteLogFormat(L"%s: I8=%lld", prefix, (long long)TV_I8(&value));
+            break;
+        case VTYPE_UI4:
+            WriteLogFormat(L"%s: UI4=%lu", prefix, (unsigned long)TV_UI4(&value));
+            break;
+        case VTYPE_UI8:
+            WriteLogFormat(L"%s: UI8=%llu", prefix, (unsigned long long)TV_UI8(&value));
+            break;
+        case VTYPE_BOOL:
+            WriteLogFormat(L"%s: BOOL=%d", prefix, TV_BOOL(&value) ? 1 : 0);
+            break;
+        case VTYPE_PWSTR:
+            WriteLogFormat(L"%s: PWSTR len=%u", prefix, (unsigned)UNW_TV_WSTR_LEN(&value));
+            break;
+        case VTYPE_PSTR:
+        case VTYPE_BLOB:
+            WriteLogFormat(L"%s: STR len=%u", prefix, (unsigned)UNW_TV_STR_LEN(&value));
+            break;
+        default:
+            break;
+        }
+    }
+
     extern "C" IMAGE_DOS_HEADER __ImageBase;
 
     bool GetModuleDir(CAtlStringW& outDir)
@@ -662,6 +779,7 @@ STDMETHODIMP CAddInCOM::Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD
 
     long methodNum = (long)dispIdMember;
     UINT argCount = pDispParams->cArgs;
+    WriteLogFormat(L"Invoke: dispId=%ld flags=0x%X args=%u", methodNum, (unsigned)wFlags, argCount);
 
     if (methodNum == eMethSetDriverName)
     {
@@ -754,6 +872,7 @@ STDMETHODIMP CAddInCOM::GetNProps(long *plProps)
     if (m_native)
         *plProps = m_native->GetNProps();
 
+    WriteLogFormat(L"GetNProps: count=%ld", *plProps);
     return S_OK;
 }
 //---------------------------------------------------------------------------//
@@ -763,6 +882,7 @@ STDMETHODIMP CAddInCOM::FindProp(BSTR bstrPropName,long *plPropNum)
         return E_INVALIDARG;
 
     *plPropNum = -1;
+    WriteLogFormat(L"FindProp: name='%s'", bstrPropName ? bstrPropName : L"(null)");
     if (!m_native)
         return S_FALSE;
 
@@ -775,6 +895,7 @@ STDMETHODIMP CAddInCOM::FindProp(BSTR bstrPropName,long *plPropNum)
     m_memoryManager.FreeMemory((void**)&name);
     *plPropNum = res;
 
+    WriteLogFormat(L"FindProp: result=%ld", *plPropNum);
     return (*plPropNum == -1) ? S_FALSE : S_OK;
 }
 //---------------------------------------------------------------------------//
@@ -784,6 +905,7 @@ STDMETHODIMP CAddInCOM::GetPropName(long lPropNum,long lPropAlias,
     if (!pbstrPropName)
         return E_INVALIDARG;
 
+    WriteLogFormat(L"GetPropName: prop=%ld alias=%ld", lPropNum, lPropAlias);
     if (!m_native)
         return S_FALSE;
 
@@ -802,6 +924,7 @@ STDMETHODIMP CAddInCOM::GetPropVal(long lPropNum,VARIANT *pvarPropVal)
     if (!pvarPropVal)
         return E_INVALIDARG;
 
+    WriteLogFormat(L"GetPropVal: prop=%ld", lPropNum);
     if (!m_native)
         return S_FALSE;
 
@@ -813,6 +936,7 @@ STDMETHODIMP CAddInCOM::GetPropVal(long lPropNum,VARIANT *pvarPropVal)
     bool ok = TVariantToVariant(val, pvarPropVal);
     ClearTVariant(&val);
 
+    WriteLogFormat(L"GetPropVal: ok=%d ret vt=0x%04X", ok ? 1 : 0, (unsigned)pvarPropVal->vt);
     return ok ? S_OK : E_FAIL;
 }
 //---------------------------------------------------------------------------//
@@ -821,6 +945,7 @@ STDMETHODIMP CAddInCOM::SetPropVal(long lPropNum,VARIANT *pvarPropVal)
     if (!pvarPropVal)
         return E_INVALIDARG;
 
+    WriteLogFormat(L"SetPropVal: prop=%ld vt=0x%04X", lPropNum, (unsigned)pvarPropVal->vt);
     if (!m_native)
         return S_FALSE;
 
@@ -833,6 +958,7 @@ STDMETHODIMP CAddInCOM::SetPropVal(long lPropNum,VARIANT *pvarPropVal)
     bool ok = m_native->SetPropVal(lPropNum, &val);
     ClearTVariant(&val);
 
+    WriteLogFormat(L"SetPropVal: ok=%d", ok ? 1 : 0);
     return ok ? S_OK : S_FALSE;
 }
 //---------------------------------------------------------------------------//
@@ -841,6 +967,7 @@ STDMETHODIMP CAddInCOM::IsPropReadable(long lPropNum,BOOL *pboolPropRead)
     if (!pboolPropRead)
         return E_INVALIDARG;
 
+    WriteLogFormat(L"IsPropReadable: prop=%ld", lPropNum);
     if (!m_native)
         return S_FALSE;
 
@@ -853,6 +980,7 @@ STDMETHODIMP CAddInCOM::IsPropWritable(long lPropNum,BOOL *pboolPropWrite)
     if (!pboolPropWrite)
         return E_INVALIDARG;
 
+    WriteLogFormat(L"IsPropWritable: prop=%ld", lPropNum);
     if (!m_native)
         return S_FALSE;
 
@@ -869,7 +997,8 @@ STDMETHODIMP CAddInCOM::GetNMethods(long *plMethods)
     if (m_native)
         nativeCount = m_native->GetNMethods();
 
-    *plMethods = 1 + nativeCount;
+    *plMethods = nativeCount + 1;
+    WriteLogFormat(L"GetNMethods: native=%ld wrapper=%ld", nativeCount, *plMethods);
     return S_OK;
 }
 //---------------------------------------------------------------------------//
@@ -879,16 +1008,22 @@ STDMETHODIMP CAddInCOM::FindMethod(BSTR bstrMethodName, long *plMethodNum)
         return E_INVALIDARG;
 
     *plMethodNum = -1;
+    const wchar_t* methodName = bstrMethodName ? bstrMethodName : L"(null)";
+    WriteLogFormat(L"FindMethod: name='%s'", methodName);
     CAtlStringW name(bstrMethodName);
     if (name.CompareNoCase(kMethodSetDriverNameEn) == 0 ||
         name.CompareNoCase(kMethodSetDriverNameRu) == 0)
     {
         *plMethodNum = eMethSetDriverName;
+        WriteLogFormat(L"FindMethod: matched wrapper method index=%ld", *plMethodNum);
         return S_OK;
     }
 
     if (!m_native)
+    {
+        WriteLogLine(L"FindMethod: native component is not initialized.");
         return S_FALSE;
+    }
 
     WCHAR_T* shortName = 0;
     uint32_t len = 0;
@@ -900,10 +1035,12 @@ STDMETHODIMP CAddInCOM::FindMethod(BSTR bstrMethodName, long *plMethodNum)
 
     if (nativeIndex >= 0)
     {
-        *plMethodNum = nativeIndex + 1;
+        *plMethodNum = nativeIndex;
+        WriteLogFormat(L"FindMethod: native index=%ld, wrapper index=%ld", nativeIndex, *plMethodNum);
         return S_OK;
     }
 
+    WriteLogFormat(L"FindMethod: method not found (native index=%ld).", nativeIndex);
     return S_FALSE;
 }
 //---------------------------------------------------------------------------//
@@ -913,6 +1050,7 @@ STDMETHODIMP CAddInCOM::GetMethodName(long lMethodNum,long lMethodAlias,
     if (!pbstrMethodName)
         return E_INVALIDARG;
 
+    WriteLogFormat(L"GetMethodName: method=%ld alias=%ld", lMethodNum, lMethodAlias);
     if (lMethodNum == eMethSetDriverName)
     {
         if (lMethodAlias == 1)
@@ -925,7 +1063,7 @@ STDMETHODIMP CAddInCOM::GetMethodName(long lMethodNum,long lMethodAlias,
     if (!m_native)
         return S_FALSE;
 
-    const WCHAR_T* name = m_native->GetMethodName(lMethodNum - 1, lMethodAlias);
+    const WCHAR_T* name = m_native->GetMethodName(lMethodNum, lMethodAlias);
     if (!name)
         return S_FALSE;
 
@@ -943,13 +1081,18 @@ STDMETHODIMP CAddInCOM::GetNParams(long lMethodNum,long *plParams)
     if (lMethodNum == eMethSetDriverName)
     {
         *plParams = 2;
+        WriteLogFormat(L"GetNParams: method=%ld wrapper params=%ld", lMethodNum, *plParams);
         return S_OK;
     }
 
     if (!m_native)
+    {
+        WriteLogFormat(L"GetNParams: method=%ld native not initialized", lMethodNum);
         return S_FALSE;
+    }
 
-    *plParams = m_native->GetNParams(lMethodNum - 1);
+    *plParams = m_native->GetNParams(lMethodNum);
+    WriteLogFormat(L"GetNParams: method=%ld native params=%ld", lMethodNum, *plParams);
     return S_OK;
 }
 //---------------------------------------------------------------------------//
@@ -960,6 +1103,7 @@ STDMETHODIMP CAddInCOM::GetParamDefValue(long lMethodNum,long lParamNum,
         return E_INVALIDARG;
 
     ::VariantInit(pvarParamDefValue);
+    WriteLogFormat(L"GetParamDefValue: method=%ld param=%ld", lMethodNum, lParamNum);
 
     if (lMethodNum == eMethSetDriverName)
         return S_OK;
@@ -969,10 +1113,30 @@ STDMETHODIMP CAddInCOM::GetParamDefValue(long lMethodNum,long lParamNum,
 
     tVariant val;
     tVarInit(&val);
-    if (!m_native->GetParamDefValue(lMethodNum - 1, lParamNum, &val))
+    if (!m_native->GetParamDefValue(lMethodNum, lParamNum, &val))
         return S_FALSE;
 
     bool ok = TVariantToVariant(val, pvarParamDefValue);
+    if (ok)
+    {
+        const WCHAR_T* methodName = m_native->GetMethodName(lMethodNum, 0);
+        if (methodName)
+        {
+            BSTR bstrName = ConvertWcharTToBstr(methodName, 0);
+            WCHAR_T* tmp = const_cast<WCHAR_T*>(methodName);
+            m_memoryManager.FreeMemory((void**)&tmp);
+            if (bstrName)
+            {
+                CAtlStringW name(bstrName);
+                ::SysFreeString(bstrName);
+                if (name.CompareNoCase(L"ПолучитьОписание") == 0)
+                {
+                    WriteLogFormat(L"GetParamDefValue: method='ПолучитьОписание' vt=0x%04X",
+                                   (unsigned)pvarParamDefValue->vt);
+                }
+            }
+        }
+    }
     ClearTVariant(&val);
 
     return ok ? S_OK : E_FAIL;
@@ -985,24 +1149,37 @@ STDMETHODIMP CAddInCOM::HasRetVal(long lMethodNum,BOOL *pboolRetValue)
 
     if (lMethodNum == eMethSetDriverName)
     {
-        *pboolRetValue = FALSE;
+        *pboolRetValue = TRUE;
+        WriteLogFormat(L"HasRetVal: method=%ld wrapper ret=TRUE", lMethodNum);
         return S_OK;
     }
 
     if (!m_native)
+    {
+        WriteLogFormat(L"HasRetVal: method=%ld native not initialized", lMethodNum);
         return S_FALSE;
+    }
 
-    *pboolRetValue = m_native->HasRetVal(lMethodNum - 1) ? TRUE : FALSE;
+    *pboolRetValue = m_native->HasRetVal(lMethodNum) ? TRUE : FALSE;
+    WriteLogFormat(L"HasRetVal: method=%ld native ret=%d", lMethodNum, *pboolRetValue ? 1 : 0);
     return S_OK;
 }
 //---------------------------------------------------------------------------//
 STDMETHODIMP CAddInCOM::CallAsProc(long lMethodNum, SAFEARRAY **paParams)
 {
+    WriteLogFormat(L"CallAsProc: enter method=%ld params=0x%p",
+                   lMethodNum, (paParams && *paParams) ? *paParams : 0);
     if (lMethodNum == eMethSetDriverName)
+    {
+        WriteLogLine(L"CallAsProc: setDriverName");
         return CallSetDriverName(paParams);
+    }
 
     if (!m_native)
+    {
+        WriteLogLine(L"CallAsProc: native component is not initialized.");
         return S_FALSE;
+    }
 
     WriteLogFormat(L"CallAsProc: method=%ld", lMethodNum);
 
@@ -1022,6 +1199,7 @@ STDMETHODIMP CAddInCOM::CallAsProc(long lMethodNum, SAFEARRAY **paParams)
         if (FAILED(hr))
             return E_FAIL;
     }
+    WriteLogFormat(L"CallAsProc: params bounds [%ld..%ld], count=%ld", lBound, uBound, count);
 
     tVariant* tParams = (count > 0) ? new tVariant[count] : 0;
     bool* byRef = (count > 0) ? new bool[count] : 0;
@@ -1029,8 +1207,12 @@ STDMETHODIMP CAddInCOM::CallAsProc(long lMethodNum, SAFEARRAY **paParams)
     for (long i = 0; i < count; ++i)
     {
         tVarInit(&tParams[i]);
+        VARTYPE vt = data[i].vt;
+        WriteLogFormat(L"CallAsProc: param[%ld] vt=%s (0x%04X) byref=%d",
+                       i, VariantTypeToString(vt), (unsigned)vt, (vt & VT_BYREF) ? 1 : 0);
         if (!VariantToTVariant(data[i], &tParams[i], byRef[i]))
         {
+            WriteLogFormat(L"CallAsProc: VariantToTVariant failed for param[%ld].", i);
             for (long j = 0; j <= i; ++j)
                 ClearTVariant(&tParams[j]);
             if (params)
@@ -1042,13 +1224,24 @@ STDMETHODIMP CAddInCOM::CallAsProc(long lMethodNum, SAFEARRAY **paParams)
     }
 
     WriteLogFormat(L"CallAsProc: native вызов, params=%ld", count);
-    bool ok = m_native->CallAsProc(lMethodNum - 1, tParams, count);
+    bool ok = false;
+    __try
+    {
+        ok = m_native->CallAsProc(lMethodNum, tParams, count);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        DWORD code = GetExceptionCode();
+        WriteLogFormat(L"CallAsProc: native exception 0x%08X", code);
+        ok = false;
+    }
     WriteLogFormat(L"CallAsProc: native вернул %s", ok ? L"true" : L"false");
 
     for (long i = 0; i < count; ++i)
     {
-        if (byRef[i])
-            UpdateByRefVariant(data[i], tParams[i]);
+        ::VariantClear(&data[i]);
+        if (!TVariantToVariant(tParams[i], &data[i]))
+            WriteLogFormat(L"CallAsProc: overwrite param[%ld] failed.", i);
         ClearTVariant(&tParams[i]);
     }
 
@@ -1064,6 +1257,8 @@ STDMETHODIMP CAddInCOM::CallAsProc(long lMethodNum, SAFEARRAY **paParams)
 STDMETHODIMP CAddInCOM::CallAsFunc(long lMethodNum,VARIANT *pvarRetValue,
                                    SAFEARRAY **paParams)
 {
+    WriteLogFormat(L"CallAsFunc: enter method=%ld ret=0x%p params=0x%p",
+                   lMethodNum, pvarRetValue, (paParams && *paParams) ? *paParams : 0);
     if (!pvarRetValue)
         return E_INVALIDARG;
 
@@ -1071,6 +1266,7 @@ STDMETHODIMP CAddInCOM::CallAsFunc(long lMethodNum,VARIANT *pvarRetValue,
 
     if (lMethodNum == eMethSetDriverName)
     {
+        WriteLogLine(L"CallAsFunc: setDriverName");
         HRESULT hr = CallSetDriverName(paParams);
         V_VT(pvarRetValue) = VT_BOOL;
         V_BOOL(pvarRetValue) = (hr == S_OK) ? VARIANT_TRUE : VARIANT_FALSE;
@@ -1078,7 +1274,10 @@ STDMETHODIMP CAddInCOM::CallAsFunc(long lMethodNum,VARIANT *pvarRetValue,
     }
 
     if (!m_native)
+    {
+        WriteLogLine(L"CallAsFunc: native component is not initialized.");
         return S_FALSE;
+    }
 
     WriteLogFormat(L"CallAsFunc: method=%ld", lMethodNum);
 
@@ -1098,6 +1297,13 @@ STDMETHODIMP CAddInCOM::CallAsFunc(long lMethodNum,VARIANT *pvarRetValue,
         if (FAILED(hr))
             return E_FAIL;
     }
+    WriteLogFormat(L"CallAsFunc: params bounds [%ld..%ld], count=%ld", lBound, uBound, count);
+    if (count > 0 && data)
+    {
+        VARTYPE rawVt = data[0].vt;
+        WriteLogFormat(L"CallAsFunc: raw param[0].vt=%s (0x%04X) byref=%d",
+                       VariantTypeToString(rawVt), (unsigned)rawVt, (rawVt & VT_BYREF) ? 1 : 0);
+    }
 
     tVariant* tParams = (count > 0) ? new tVariant[count] : 0;
     bool* byRef = (count > 0) ? new bool[count] : 0;
@@ -1105,8 +1311,12 @@ STDMETHODIMP CAddInCOM::CallAsFunc(long lMethodNum,VARIANT *pvarRetValue,
     for (long i = 0; i < count; ++i)
     {
         tVarInit(&tParams[i]);
+        VARTYPE vt = data[i].vt;
+        WriteLogFormat(L"CallAsFunc: param[%ld] vt=%s (0x%04X) byref=%d",
+                       i, VariantTypeToString(vt), (unsigned)vt, (vt & VT_BYREF) ? 1 : 0);
         if (!VariantToTVariant(data[i], &tParams[i], byRef[i]))
         {
+            WriteLogFormat(L"CallAsFunc: VariantToTVariant failed for param[%ld].", i);
             for (long j = 0; j <= i; ++j)
                 ClearTVariant(&tParams[j]);
             if (params)
@@ -1120,13 +1330,25 @@ STDMETHODIMP CAddInCOM::CallAsFunc(long lMethodNum,VARIANT *pvarRetValue,
     tVariant retVal;
     tVarInit(&retVal);
     WriteLogFormat(L"CallAsFunc: native вызов, params=%ld", count);
-    bool ok = m_native->CallAsFunc(lMethodNum - 1, &retVal, tParams, count);
+    bool ok = false;
+    __try
+    {
+        ok = m_native->CallAsFunc(lMethodNum, &retVal, tParams, count);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        DWORD code = GetExceptionCode();
+        WriteLogFormat(L"CallAsFunc: native exception 0x%08X", code);
+        ok = false;
+    }
     WriteLogFormat(L"CallAsFunc: native вернул %s", ok ? L"true" : L"false");
+    LogTVariantSummary(retVal, L"CallAsFunc: retVal");
 
     for (long i = 0; i < count; ++i)
     {
-        if (byRef[i])
-            UpdateByRefVariant(data[i], tParams[i]);
+        ::VariantClear(&data[i]);
+        if (!TVariantToVariant(tParams[i], &data[i]))
+            WriteLogFormat(L"CallAsFunc: overwrite param[%ld] failed.", i);
         ClearTVariant(&tParams[i]);
     }
 
@@ -1143,6 +1365,8 @@ STDMETHODIMP CAddInCOM::CallAsFunc(long lMethodNum,VARIANT *pvarRetValue,
     }
 
     bool converted = TVariantToVariant(retVal, pvarRetValue);
+    WriteLogFormat(L"CallAsFunc: TVariantToVariant ok=%d ret vt=0x%04X",
+                   converted ? 1 : 0, pvarRetValue ? (unsigned)pvarRetValue->vt : 0);
     ClearTVariant(&retVal);
 
     return converted ? S_OK : E_FAIL;
@@ -1521,6 +1745,7 @@ bool CAddInCOM::VariantToTVariantValue(const VARIANT& val, tVariant* dst)
         {
             if (!m_memoryManager.AllocMemory((void**)&dst->pstrVal, size))
             {
+                WriteLogFormat(L"VariantToTVariantValue: AllocMemory failed, size=%ld.", size);
                 SafeArrayUnaccessData(psa);
                 return false;
             }
@@ -1532,6 +1757,8 @@ bool CAddInCOM::VariantToTVariantValue(const VARIANT& val, tVariant* dst)
         return true;
     }
 
+    WriteLogFormat(L"VariantToTVariantValue: unsupported vt=0x%04X (%s).",
+                   (unsigned)val.vt, VariantTypeToString(val.vt));
     return false;
 }
 //---------------------------------------------------------------------------//
@@ -1617,6 +1844,11 @@ bool CAddInCOM::TVariantToVariant(const tVariant& src, VARIANT* dst)
     case VTYPE_PWSTR:
         V_VT(dst) = VT_BSTR;
         V_BSTR(dst) = ConvertWcharTToBstr(src.pwstrVal, src.wstrLen);
+        if (!V_BSTR(dst))
+        {
+            WriteLogLine(L"TVariantToVariant: ConvertWcharTToBstr failed.");
+            return false;
+        }
         return true;
     case VTYPE_PSTR:
     {
@@ -1628,7 +1860,10 @@ bool CAddInCOM::TVariantToVariant(const tVariant& src, VARIANT* dst)
         }
         int needed = MultiByteToWideChar(CP_ACP, 0, src.pstrVal, src.strLen, 0, 0);
         if (needed <= 0)
+        {
+            WriteLogLine(L"TVariantToVariant: MultiByteToWideChar failed.");
             return false;
+        }
         BSTR bstr = ::SysAllocStringLen(0, needed);
         MultiByteToWideChar(CP_ACP, 0, src.pstrVal, src.strLen, bstr, needed);
         V_BSTR(dst) = bstr;
@@ -1641,7 +1876,10 @@ bool CAddInCOM::TVariantToVariant(const tVariant& src, VARIANT* dst)
         bound.cElements = src.strLen;
         SAFEARRAY* psa = SafeArrayCreate(VT_UI1, 1, &bound);
         if (!psa)
+        {
+            WriteLogLine(L"TVariantToVariant: SafeArrayCreate failed.");
             return false;
+        }
         BYTE* bytes = 0;
         if (FAILED(SafeArrayAccessData(psa, (void**)&bytes)))
         {
@@ -1659,6 +1897,8 @@ bool CAddInCOM::TVariantToVariant(const tVariant& src, VARIANT* dst)
         break;
     }
 
+    WriteLogFormat(L"TVariantToVariant: unsupported vt=0x%04X (%s).",
+                   (unsigned)vt, TVariantTypeToString(vt));
     return false;
 }
 //---------------------------------------------------------------------------//

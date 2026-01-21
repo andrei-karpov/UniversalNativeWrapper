@@ -29,7 +29,7 @@ class ATL_NO_VTABLE CAddInCOM :
 public:
     enum
     {
-        eMethSetDriverName = 0
+        eMethSetDriverName = 999
     };
 
     CAddInCOM();
