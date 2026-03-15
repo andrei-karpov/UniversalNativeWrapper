@@ -9,12 +9,27 @@ End If
 
 WScript.Echo "Создание COM-объектов..."
 Dim wrapper1, wrapper2
+Dim createErrNum, createErrDesc
+On Error Resume Next
 Set wrapper1 = CreateObject("Addin.UniversalNativeWrapper")
+createErrNum = Err.Number
+createErrDesc = Err.Description
+Err.Clear
 Set wrapper2 = CreateObject("Addin.UniversalNativeWrapper")
-If wrapper1 Is Nothing Or wrapper2 Is Nothing Then
-    WScript.Echo "Ошибка: COM-объекты не созданы."
+If createErrNum = 0 Then
+    createErrNum = Err.Number
+    createErrDesc = Err.Description
+End If
+If createErrNum <> 0 Or (Not IsObject(wrapper1)) Or (Not IsObject(wrapper2)) Then
+    WScript.Echo "Ошибка: COM-объекты не созданы (x86)."
+    WScript.Echo "Убедитесь, что зарегистрирована 32-bit DLL через:"
+    WScript.Echo "%SystemRoot%\SysWOW64\regsvr32.exe ""<путь к x86 UniversalNativeWrapper.dll>"""
+    WScript.Echo "Код ошибки: " & createErrNum & " " & createErrDesc
+    Err.Clear
+    On Error GoTo 0
     WScript.Quit 1
 End If
+On Error GoTo 0
 
 Function BuildConnectionParameters()
     Dim lines

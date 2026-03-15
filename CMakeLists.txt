@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(UNW_ENABLE_LOG "Enable UniversalNativeWrapper logging" OFF)
+
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 
 set(MIDL_OUTPUT
@@ -64,6 +66,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     _USRDLL
     _CRT_SECURE_NO_WARNINGS
 )
+
+if (UNW_ENABLE_LOG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE UNW_ENABLE_LOG)
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE rpcrt4 oleaut32)
 
